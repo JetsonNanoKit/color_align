@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "color-align"
+version = "1.0.0"
+description = "Professional Color Difference Statistics & Adaptive Color Space Alignment System"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    { name = "JetsonNanoKit" }
+]
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.22.0",
+    "python-multipart>=0.0.6",
+    "numpy>=1.22.0",
+    "opencv-python>=4.6.0",
+    "scipy>=1.9.0",
+    "pillow>=9.0.0",
+]
+
+[project.scripts]
+color-align = "cli:main"

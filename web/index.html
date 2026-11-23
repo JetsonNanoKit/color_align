@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>专业色彩差异统计与色彩迁移对齐评测系统 · Color Align & Evaluation</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: rgba(22, 27, 34, 0.85);
+      --card-border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --brand: #58a6ff;
+      --brand-glow: rgba(88, 166, 255, 0.2);
+      --success: #3fb950;
+      --success-bg: rgba(63, 185, 80, 0.15);
+      --warning: #d29922;
+      --danger: #f85149;
+      --purple: #bc8cff;
+      --cyan: #39c5cf;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.5;
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1720px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, rgba(31, 38, 51, 0.95) 0%, rgba(13, 17, 23, 0.95) 100%);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: "";
+      position: absolute;
+      top: -100px;
+      right: -100px;
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle, rgba(88, 166, 255, 0.18) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .header-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .header-title {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .badge-tag {
+      background: rgba(88, 166, 255, 0.15);
+      border: 1px solid rgba(88, 166, 255, 0.4);
+      color: var(--brand);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .badge-active-data {
+      background: rgba(63, 185, 80, 0.15);
+      border: 1px solid rgba(63, 185, 80, 0.4);
+      color: var(--success);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .header-desc {
+      color: var(--text-muted);
+      font-size: 14px;
+      max-width: 1180px;
+      line-height: 1.6;
+    }
+
+    /* Upload & Action Control Panel */
+    .upload-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 22px 28px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+    .upload-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .upload-title {
+      font-size: 17px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+    }
+    .upload-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .upload-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .drop-zone {
+      border: 2px dashed #3d444d;
+      border-radius: 12px;
+      padding: 24px 20px;
+      text-align: center;
+      background: rgba(13, 17, 23, 0.5);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--brand);
+      background: rgba(88, 166, 255, 0.08);
+    }
+    .drop-zone.has-file {
+      border-color: var(--success);
+      background: rgba(63, 185, 80, 0.08);
+    }
+    .drop-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    .drop-title {
+      font-size: 14.5px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .drop-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .drop-selected {
+      margin-top: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--success);
+      word-break: break-all;
+      display: none;
+    }
+    .file-input {
+      display: none;
+    }
+
+    .upload-actions-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .options-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn-group-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: #238636;
+      color: #fff;
+      border-color: rgba(240, 246, 252, 0.1);
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: #2ea043;
+      box-shadow: 0 4px 12px rgba(46, 160, 67, 0.3);
+    }
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-download {
+      background: linear-gradient(135deg, #1f6feb 0%, #238636 100%);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 16px rgba(31, 111, 235, 0.35);
+      animation: pulse 2s infinite;
+    }
+    .btn-download:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(31, 111, 235, 0.5);
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(35, 134, 54, 0.4); }
+      70% { box-shadow: 0 0 0 8px rgba(35, 134, 54, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(35, 134, 54, 0); }
+    }
+    .btn-secondary {
+      background: rgba(110, 118, 129, 0.15);
+      color: var(--text);
+      border-color: var(--card-border);
+    }
+    .btn-secondary:hover {
+      background: rgba(110, 118, 129, 0.25);
+      border-color: var(--text-muted);
+    }
+
+    /* Progress Notification */
+    .progress-box {
+      margin-top: 16px;
+      background: rgba(13, 17, 23, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: none;
+    }
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    .progress-bar-bg {
+      background: #21262d;
+      border-radius: 6px;
+      height: 8px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      background: linear-gradient(90deg, var(--brand) 0%, var(--success) 100%);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    /* KPI Summary Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 22px;
+    }
+    .kpi-card {
+      background: rgba(13, 17, 23, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .kpi-card:hover {
+      border-color: var(--brand);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
+    .kpi-title {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .kpi-value {
+      font-size: 24px;
+      font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      color: var(--text);
+    }
+    .kpi-value.green { color: var(--success); }
+    .kpi-value.blue { color: var(--brand); }
+    .kpi-value.cyan { color: var(--cyan); }
+    .kpi-value.purple { color: var(--purple); }
+    .kpi-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Diagnosis Banner */
+    .diagnosis-banner {
+      margin-top: 18px;
+      background: rgba(88, 166, 255, 0.08);
+      border: 1px solid rgba(88, 166, 255, 0.25);
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 13.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .diagnosis-icon {
+      font-size: 18px;
+    }
+
+    /* Toolbar: Filters & Sort */
+    .toolbar {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+    .toolbar-left, .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .search-input {
+      background: rgba(13, 17, 23, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      color: var(--text);
+      font-size: 13.5px;
+      width: 240px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus {
+      border-color: var(--brand);
+    }
+    .filter-btn-group {
+      display: flex;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .filter-btn {
+      background: rgba(13, 17, 23, 0.6);
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-right: 1px solid var(--card-border);
+    }
+    .filter-btn:last-child { border-right: none; }
+    .filter-btn.active, .filter-btn:hover {
+      background: var(--brand);
+      color: #fff;
+    }
+    .select-dropdown {
+      background: rgba(13, 17, 23, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Comparison Table */
+    .table-wrapper {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      overflow-x: auto;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    thead {
+      background: rgba(13, 17, 23, 0.95);
+      border-bottom: 2px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    th {
+      padding: 14px 16px;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 12.5px;
+      letter-spacing: 0.3px;
+    }
+    tbody tr {
+      border-bottom: 1px solid rgba(48, 54, 61, 0.6);
+      transition: background 0.15s ease;
+    }
+    tbody tr:hover {
+      background: rgba(56, 139, 253, 0.05);
+    }
+    td {
+      padding: 14px 16px;
+      vertical-align: middle;
+    }
+
+    /* Column Styles */
+    .col-id { width: 80px; text-align: center; font-weight: 600; color: var(--text-muted); }
+    .col-img { width: 140px; text-align: center; }
+    .col-space { width: 230px; }
+    .col-metrics { width: 250px; }
+    .col-aligned { min-width: 380px; }
+
+    /* Thumbnail Box */
+    .thumb-card {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .thumb-img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      transition: all 0.2s ease;
+      background: #161b22;
+    }
+    .thumb-card:hover .thumb-img {
+      border-color: var(--brand);
+      transform: scale(1.05);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    }
+    .thumb-label {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Color Space Visual */
+    .space-visual {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .space-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .space-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .gamut-canvas {
+      width: 68px;
+      height: 68px;
+      border-radius: 6px;
+      border: 1px solid var(--card-border);
+      background: #000;
+    }
+    .hist-canvas {
+      width: 120px;
+      height: 68px;
+      border-radius: 6px;
+      border: 1px solid var(--card-border);
+      background: #161b22;
+    }
+    .space-stat {
+      font-size: 10.5px;
+      font-family: ui-monospace, monospace;
+      color: var(--text-muted);
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Metric Key-Values */
+    .metrics-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+    .m-label { color: var(--text-muted); }
+    .m-val {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-weight: 600;
+    }
+    .pill {
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: ui-monospace, monospace;
+    }
+    .pill.green { background: rgba(63, 185, 80, 0.2); color: var(--success); }
+    .pill.blue { background: rgba(88, 166, 255, 0.2); color: var(--brand); }
+    .pill.cyan { background: rgba(57, 197, 207, 0.2); color: var(--cyan); }
+    .pill.amber { background: rgba(210, 153, 34, 0.2); color: var(--warning); }
+    .pill.red { background: rgba(248, 81, 73, 0.2); color: var(--danger); }
+
+    /* Aligned Column Box */
+    .aligned-box {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .aligned-thumbs {
+      display: flex;
+      gap: 8px;
+    }
+    .aligned-stat-col {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+    .btn-detail {
+      background: rgba(88, 166, 255, 0.1);
+      border: 1px solid rgba(88, 166, 255, 0.3);
+      color: var(--brand);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 4px;
+      width: fit-content;
+    }
+    .btn-detail:hover {
+      background: var(--brand);
+      color: #fff;
+    }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-top: 24px;
+      margin-bottom: 40px;
+    }
+    .page-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .page-btn.active, .page-btn:hover:not(:disabled) {
+      background: var(--brand);
+      color: #fff;
+      border-color: var(--brand);
+    }
+    .page-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Modal Backdrop */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .modal-backdrop.open { display: flex; }
+
+    .modal-content {
+      background: #161b22;
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      width: 100%;
+      max-width: 1200px;
+      max-height: 94vh;
+      overflow-y: auto;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+      padding: 28px;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: var(--text);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .modal-close:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .modal-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .modal-img-card {
+      background: #0d1117;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-img-card img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+    }
+    .modal-img-title {
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    /* Interactive Slider Comparison */
+    .slider-box {
+      margin-bottom: 24px;
+      background: #0d1117;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .slider-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .slider-container {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      height: 500px;
+      margin: 0 auto;
+      overflow: hidden;
+      border-radius: 8px;
+      user-select: none;
+      cursor: ew-resize;
+    }
+    .slider-img {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+    }
+    .slider-handle {
+      position: absolute;
+      top: 0; bottom: 0;
+      left: 50%;
+      width: 3px;
+      background: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.8);
+      cursor: ew-resize;
+    }
+    .slider-handle::after {
+      content: "◀ ▶";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      color: #000;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 4px 6px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    }
+
+    /* Stat Breakdown Table in Modal */
+    .modal-stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .modal-stat-card {
+      background: #0d1117;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .modal-stat-card h4 {
+      font-size: 13.5px;
+      margin-bottom: 12px;
+      color: var(--brand);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <header>
+    <div class="header-title-row">
+      <div class="header-title">
+        <span>专业色彩差异统计与色彩迁移对齐评测系统</span>
+        <span class="badge-tag">ISO/CIE 双流形量化评测</span>
+      </div>
+      <div class="badge-active-data" id="dataset-status-badge">
+        <span>🟢</span>
+        <span id="badge-dataset-text">当前显示：八字刘海示范数据集 (70 组)</span>
+      </div>
+    </div>
+    <div class="header-desc">
+      本系统基于国际照明委员会 (CIE) 与统计流形理论设计，提供<strong>双层色差量化指标</strong>：不仅计算国际标准感知色差 <strong>CIEDE2000 (ΔE₀₀)</strong>、明度与色度漂移 (<strong>ΔL*, Δa*, Δb*</strong>)，还引入色彩空间流形距离（<strong>3D Bhattacharyya 散度</strong> 与 <strong>1D Wasserstein 最优传输距离</strong>），并展示自适应边缘保护色彩迁移策略 (ADMH) 在消除偏色上的量化改善效果。
+    </div>
+
+    <!-- KPI Summary Grid -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">
+          <span>样本总量</span>
+          <span>📁</span>
+        </div>
+        <div class="kpi-value blue" id="kpi-total">70</div>
+        <div class="kpi-sub" id="kpi-sub-total">一对一无损像素对齐</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-title">
+          <span>平均 CIEDE2000 (ΔE₀₀)</span>
+          <span>👁️</span>
+        </div>
+        <div class="kpi-value" id="kpi-de00">1.709</div>
+        <div class="kpi-sub">ISO/CIE 标准感知色差 (JND ≈ 1.0)</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-title">
+          <span>3D Bhattacharyya 散度改善</span>
+          <span>🎯</span>
+        </div>
+        <div class="kpi-value green" id="kpi-db">-44.1%</div>
+        <div class="kpi-sub" id="kpi-sub-db">色彩空间流形拟合度大幅提升</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-title">
+          <span>Wasserstein 传输距离改善</span>
+          <span>🚚</span>
+        </div>
+        <div class="kpi-value cyan" id="kpi-w1">-39.8%</div>
+        <div class="kpi-sub" id="kpi-sub-w1">分布迁移能量优化</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-title">
+          <span>PSNR 保真度均值</span>
+          <span>📈</span>
+        </div>
+        <div class="kpi-value purple" id="kpi-psnr">29.92 dB</div>
+        <div class="kpi-sub" id="kpi-sub-psnr">结构保真度净提升</div>
+      </div>
+    </div>
+
+    <!-- Diagnostic Banner -->
+    <div class="diagnosis-banner" id="diagnosis-banner">
+      <span class="diagnosis-icon">💡</span>
+      <div id="diagnosis-text">
+        <strong>系统性色偏诊断发现：</strong>
+        全数据集统计表明，<code>src</code> 相对 <code>tag</code> 存在稳定的一致性色偏向量：<strong>Δa* = +0.167</strong>（偏红/偏洋红）、<strong>Δb* = +0.148</strong>（偏黄/偏暖）。色彩迁移策略已成功将该色彩流形差异拉齐！
+      </div>
+    </div>
+  </header>
+
+  <!-- Upload and Alignment Control Panel -->
+  <section class="upload-panel">
+    <div class="upload-head">
+      <div>
+        <div class="upload-title">
+          <span>📤 上传新样本评测与色彩对齐</span>
+          <span style="font-size: 12px; color: var(--text-muted); font-weight: normal;">(支持上传任意自定义的 src.zip 与 tag.zip)</span>
+        </div>
+        <div class="upload-desc">只需保证压缩包内的成对图片具有相同文件名（如 00001.png 或 1.jpg），系统将自动进行像素级色差量化分析与色彩迁移对齐。</div>
+      </div>
+      <div class="btn-group-actions">
+        <!-- Download Buttons -->
+        <a id="btn-download-aligned" class="btn btn-download" style="display: none;" href="#" download="aligned_src.zip">
+          <span>📥 一键下载对齐后图片包 (aligned_src.zip)</span>
+        </a>
+        <a id="btn-download-report" class="btn btn-secondary" style="display: none;" href="#" download="color_report.json">
+          <span>📊 导出评测报告 (JSON)</span>
+        </a>
+        <button id="btn-restore-demo" class="btn btn-secondary" onclick="restoreDemoData()">
+          <span>🔄 恢复八字刘海示例</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Upload Grid -->
+    <div class="upload-grid">
+      <!-- Dropzone 1: src.zip -->
+      <div class="drop-zone" id="drop-zone-src" onclick="document.getElementById('file-input-src').click()">
+        <input type="file" id="file-input-src" class="file-input" accept=".zip" onchange="handleFileSelect('src', this.files[0])">
+        <div class="drop-icon">📦</div>
+        <div class="drop-title">选择或拖拽上传 src.zip</div>
+        <div class="drop-hint">源图片压缩包（如模型修复输出图、待对齐图片）</div>
+        <div class="drop-selected" id="selected-src-name"></div>
+      </div>
+
+      <!-- Dropzone 2: tag.zip -->
+      <div class="drop-zone" id="drop-zone-tag" onclick="document.getElementById('file-input-tag').click()">
+        <input type="file" id="file-input-tag" class="file-input" accept=".zip" onchange="handleFileSelect('tag', this.files[0])">
+        <div class="drop-icon">🎯</div>
+        <div class="drop-title">选择或拖拽上传 tag.zip</div>
+        <div class="drop-hint">目标色彩基准压缩包（参考色彩真值或 Ground Truth）</div>
+        <div class="drop-selected" id="selected-tag-name"></div>
+      </div>
+    </div>
+
+    <!-- Upload Actions & Algorithm Selection -->
+    <div class="upload-actions-bar">
+      <div class="options-group">
+        <label style="font-size: 13.5px; color: var(--text-muted); font-weight: 600;">色彩对齐策略：</label>
+        <select id="select-align-mode" class="select-dropdown" style="padding: 7px 12px;">
+          <option value="admh" selected>🌟 自适应分布匹配 (ADMH, 默认推荐 · 保护未编辑背景)</option>
+          <option value="global_cdf">📊 全局 Lab CDF 直方图均衡对齐 (Global CDF)</option>
+          <option value="reinhard">📐 Reinhard 统计色偏迁移 (Statistical Lab)</option>
+        </select>
+      </div>
+
+      <button id="btn-start-process" class="btn btn-primary" onclick="submitUpload()" disabled>
+        <span>🚀 开始色差量化分析与色彩迁移对齐</span>
+      </button>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="progress-box" id="progress-box">
+      <div class="progress-info">
+        <span id="progress-status-text">正在上传并提取图片...</span>
+        <span id="progress-pct-text" style="font-family: ui-monospace, monospace; font-weight: 600;">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progress-bar-fill"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <input type="text" id="search-input" class="search-input" placeholder="🔍 搜索文件名 (如 00001, gao)...">
+      <div class="filter-btn-group">
+        <button class="filter-btn active" data-filter="all">全部样本</button>
+        <button class="filter-btn" data-filter="high">显著色偏 (ΔE₀₀ > 2.0)</button>
+        <button class="filter-btn" data-filter="med">中度差异 (1.5 ~ 2.0)</button>
+        <button class="filter-btn" data-filter="low">轻微差异 (≤ 1.5)</button>
+      </div>
+    </div>
+    <div class="toolbar-right">
+      <label style="font-size: 13px; color: var(--text-muted);">排序方式：</label>
+      <select id="sort-select" class="select-dropdown">
+        <option value="id_asc">默认编号 (升序)</option>
+        <option value="de00_desc">CIEDE2000 色差 (从高到低)</option>
+        <option value="de00_asc">CIEDE2000 色差 (从低到高)</option>
+        <option value="db_desc">Bhattacharyya 改善率 (从大到小)</option>
+        <option value="psnr_desc">PSNR 保真度 (从高到低)</option>
+      </select>
+      <span id="filtered-count" style="font-size: 13px; color: var(--text-muted); margin-left: 8px;">显示 0 / 0 组</span>
+    </div>
+  </div>
+
+  <!-- Main Comparison Table -->
+  <div class="table-wrapper">
+    <table id="main-table">
+      <thead>
+        <tr>
+          <th class="col-id"># 样本</th>
+          <th class="col-img">src (源图)</th>
+          <th class="col-img">tag (目标图)</th>
+          <th class="col-space">src 色彩空间</th>
+          <th class="col-space">tag 色彩空间</th>
+          <th class="col-metrics">色彩空间差异值 (可量化指标)</th>
+          <th class="col-aligned">色彩迁移对齐效果 & 评估</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <!-- Rows will be injected by JavaScript -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" id="pagination">
+    <!-- Buttons injected dynamically -->
+  </div>
+</div>
+
+<!-- Interactive Detail Modal -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal-content">
+    <button class="modal-close" id="modal-close">&times;</button>
+    <div class="modal-title">
+      <span id="modal-title-text">样本详情对比 · 00001.png</span>
+      <span class="pill blue" id="modal-badge-de00">ΔE₀₀: 1.88</span>
+    </div>
+
+    <!-- 4 Images Row -->
+    <div class="modal-grid-4">
+      <div class="modal-img-card">
+        <img id="m-img-src" src="" alt="src">
+        <div class="modal-img-title">1. src (原始图)</div>
+      </div>
+      <div class="modal-img-card">
+        <img id="m-img-aligned" src="" alt="aligned">
+        <div class="modal-img-title" style="color: var(--success);">2. aligned (色彩迁移对齐)</div>
+      </div>
+      <div class="modal-img-card">
+        <img id="m-img-tag" src="" alt="tag">
+        <div class="modal-img-title">3. tag (目标图)</div>
+      </div>
+      <div class="modal-img-card">
+        <img id="m-img-heat" src="" alt="heatmap">
+        <div class="modal-img-title" style="color: var(--warning);">4. 色差热力分布 (TURBO)</div>
+      </div>
+    </div>
+
+    <!-- Split-Slider Comparison -->
+    <div class="slider-box">
+      <div class="slider-title">
+        <span>交互式卷帘对比 (滑动白色手柄自由查看 tag基准 ↔ 对齐图 像素级贴合度)</span>
+        <span style="color: var(--brand); font-size: 12.5px;">拖拽中线对比</span>
+      </div>
+      <div class="slider-container" id="slider-container">
+        <!-- Bottom: Tag Reference -->
+        <img class="slider-img" id="slider-bottom" src="" alt="bottom">
+        <!-- Top: Aligned Output (Clipped) -->
+        <img class="slider-img" id="slider-top" src="" alt="top" style="clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);">
+        <div class="slider-handle" id="slider-handle"></div>
+      </div>
+    </div>
+
+    <!-- Stat Breakdown -->
+    <div class="modal-stat-grid">
+      <div class="modal-stat-card">
+        <h4>📊 色彩空间多维量化指标 (原始 ➔ 对齐后)</h4>
+        <table style="width: 100%; font-size: 12.5px;">
+          <tr>
+            <td style="color: var(--text-muted); padding: 4px 0;">CIEDE2000 (ΔE₀₀ 均值)</td>
+            <td id="m-stat-de00" style="font-family: ui-monospace, monospace; font-weight: 600;"></td>
+          </tr>
+          <tr>
+            <td style="color: var(--text-muted); padding: 4px 0;">色差 P95 分位数</td>
+            <td id="m-stat-p95" style="font-family: ui-monospace, monospace; font-weight: 600;"></td>
+          </tr>
+          <tr>
+            <td style="color: var(--text-muted); padding: 4px 0;">3D Bhattacharyya 色域散度</td>
+            <td id="m-stat-db" style="font-family: ui-monospace, monospace; font-weight: 600;"></td>
+          </tr>
+          <tr>
+            <td style="color: var(--text-muted); padding: 4px 0;">1D Wasserstein 最优传输 (W₁)</td>
+            <td id="m-stat-w1" style="font-family: ui-monospace, monospace; font-weight: 600;"></td>
+          </tr>
+          <tr>
+            <td style="color: var(--text-muted); padding: 4px 0;">PSNR 峰值信噪比</td>
+            <td id="m-stat-psnr" style="font-family: ui-monospace, monospace; font-weight: 600;"></td>
+          </tr>
+          <tr>
+            <td style="color: var(--text-muted); padding: 4px 0;">SSIM 结构相似度</td>
+            <td id="m-stat-ssim" style="font-family: ui-monospace, monospace; font-weight: 600;"></td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="modal-stat-card">
+        <h4>🎯 通道色偏诊断与人脸编辑区 (ROI) 分析</h4>
+        <table style="width: 100%; font-size: 12.5px;">
+          <tr>
+            <td style="color: var(--text-muted); padding: 4px 0;">明度偏差 ΔL* (Src - Tag)</td>
+            <td id="m-stat-dl" style="font-family: ui-monospace, monospace; font-weight: 600;"></td>
+          </tr>
+          <tr>
+            <td style="color: var(--text-muted); padding: 4px 0;">红绿偏差 Δa* (Src - Tag)</td>
+            <td id="m-stat-da" style="font-family: ui-monospace, monospace; font-weight: 600;"></td>
+          </tr>
+          <tr>
+            <td style="color: var(--text-muted); padding: 4px 0;">黄蓝偏差 Δb* (Src - Tag)</td>
+            <td id="m-stat-db-shift" style="font-family: ui-monospace, monospace; font-weight: 600;"></td>
+          </tr>
+          <tr>
+            <td style="color: var(--text-muted); padding: 4px 0;">彩度/饱和度偏差 ΔC*</td>
+            <td id="m-stat-dc" style="font-family: ui-monospace, monospace; font-weight: 600;"></td>
+          </tr>
+          <tr>
+            <td style="color: var(--text-muted); padding: 4px 0;">有效编辑区 (刘海/面部) 占比</td>
+            <td id="m-stat-roi-ratio" style="font-family: ui-monospace, monospace; font-weight: 600;"></td>
+          </tr>
+          <tr>
+            <td style="color: var(--text-muted); padding: 4px 0;">编辑区专用 ΔE₀₀ 色差</td>
+            <td id="m-stat-roi-de" style="font-family: ui-monospace, monospace; font-weight: 600;"></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Load fallback demo data script -->
+<script src="data.js"></script>
+
+<script>
+  let rawData = null;
+  let items = [];
+  let currentFilter = 'all';
+  let currentSort = 'id_asc';
+  let currentSearch = '';
+  let currentPage = 1;
+  const PAGE_SIZE = 15;
+
+  let selectedSrcFile = null;
+  let selectedTagFile = null;
+
+  // Initialize
+  async function init() {
+    setupDragAndDrop();
+    setupEvents();
+
+    // Try fetching default data from API or static file
+    try {
+      const resp = await fetch('/api/default_data');
+      if (resp.ok) {
+        rawData = await resp.json();
+      }
+    } catch (e) {
+      // Fallback
+    }
+
+    if (!rawData && window.COLOR_ANALYSIS_DATA) {
+      rawData = window.COLOR_ANALYSIS_DATA;
+    } else if (!rawData) {
+      try {
+        const resp2 = await fetch('data.json');
+        rawData = await resp2.json();
+      } catch (err) {
+        console.warn('No initial data.json found', err);
+      }
+    }
+
+    if (rawData) {
+      applyDataset(rawData, "八字刘海示范数据集 (70 组)");
+    }
+  }
+
+  function applyDataset(data, label, downloadUrl = null, reportUrl = null) {
+    rawData = data;
+    items = rawData.items || [];
+
+    // Update Badge
+    document.getElementById('badge-dataset-text').textContent = `当前显示：${label}`;
+
+    // Update KPI Cards
+    const s = rawData.summary;
+    document.getElementById('kpi-total').textContent = s.total_pairs;
+    document.getElementById('kpi-de00').textContent = s.mean_ciede2000_raw.toFixed(3);
+    document.getElementById('kpi-db').textContent = `-${s.avg_db_reduction_pct}%`;
+    document.getElementById('kpi-w1').textContent = `-${s.avg_w1_reduction_pct}%`;
+    document.getElementById('kpi-psnr').textContent = `${s.mean_psnr_aligned.toFixed(2)} dB`;
+
+    // Update Subtitles
+    if (s.systematic_bias) {
+      const sb = s.systematic_bias;
+      document.getElementById('diagnosis-text').innerHTML = `
+        <strong>系统性色偏诊断发现：</strong>
+        全数据集统计：<strong>ΔL* = ${sb.avg_delta_L > 0 ? '+'+sb.avg_delta_L : sb.avg_delta_L}</strong>，
+        <strong>Δa* = ${sb.avg_delta_a > 0 ? '+'+sb.avg_delta_a : sb.avg_delta_a}</strong>，
+        <strong>Δb* = ${sb.avg_delta_b > 0 ? '+'+sb.avg_delta_b : sb.avg_delta_b}</strong>。
+        ${sb.interpretation || ''}
+      `;
+    }
+
+    // Update Download Buttons
+    const btnDl = document.getElementById('btn-download-aligned');
+    const btnRep = document.getElementById('btn-download-report');
+    if (downloadUrl) {
+      btnDl.href = downloadUrl;
+      btnDl.style.display = 'inline-flex';
+    } else {
+      btnDl.style.display = 'none';
+    }
+
+    if (reportUrl) {
+      btnRep.href = reportUrl;
+      btnRep.style.display = 'inline-flex';
+    } else {
+      btnRep.style.display = 'none';
+    }
+
+    currentPage = 1;
+    render();
+  }
+
+  function restoreDemoData() {
+    if (window.COLOR_ANALYSIS_DATA) {
+      applyDataset(window.COLOR_ANALYSIS_DATA, "八字刘海示范数据集 (70 组)");
+    } else {
+      fetch('/api/default_data')
+        .then(r => r.json())
+        .then(d => applyDataset(d, "八字刘海示范数据集 (70 组)"));
+    }
+  }
+
+  // File Upload & Drag-and-Drop handling
+  function setupDragAndDrop() {
+    ['src', 'tag'].forEach(type => {
+      const zone = document.getElementById(`drop-zone-${type}`);
+
+      ['dragenter', 'dragover'].forEach(eventName => {
+        zone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          zone.classList.add('dragover');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        zone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          zone.classList.remove('dragover');
+        });
+      });
+
+      zone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const file = dt.files[0];
+        if (file) handleFileSelect(type, file);
+      });
+    });
+  }
+
+  function handleFileSelect(type, file) {
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.zip')) {
+      alert('请上传 .zip 压缩文件！');
+      return;
+    }
+
+    const zone = document.getElementById(`drop-zone-${type}`);
+    const nameEl = document.getElementById(`selected-${type}-name`);
+
+    zone.classList.add('has-file');
+    nameEl.textContent = `✓ 已选: ${file.name} (${(file.size / (1024*1024)).toFixed(2)} MB)`;
+    nameEl.style.display = 'block';
+
+    if (type === 'src') selectedSrcFile = file;
+    if (type === 'tag') selectedTagFile = file;
+
+    const btnStart = document.getElementById('btn-start-process');
+    if (selectedSrcFile && selectedTagFile) {
+      btnStart.disabled = false;
+      btnStart.style.boxShadow = '0 0 16px rgba(46, 160, 67, 0.4)';
+    }
+  }
+
+  async function submitUpload() {
+    if (!selectedSrcFile || !selectedTagFile) {
+      alert('请先选择 src.zip 与 tag.zip 俩个压缩包！');
+      return;
+    }
+
+    const btnStart = document.getElementById('btn-start-process');
+    const pBox = document.getElementById('progress-box');
+    const pBar = document.getElementById('progress-bar-fill');
+    const pStatus = document.getElementById('progress-status-text');
+    const pPct = document.getElementById('progress-pct-text');
+
+    btnStart.disabled = true;
+    pBox.style.display = 'block';
+    pBar.style.width = '15%';
+    pPct.textContent = '15%';
+    pStatus.textContent = '正在上传 src.zip 与 tag.zip ...';
+
+    const formData = new FormData();
+    formData.append('src_file', selectedSrcFile);
+    formData.append('tag_file', selectedTagFile);
+    formData.append('mode', document.getElementById('select-align-mode').value);
+
+    // Simulated progress tick while backend processes
+    let progress = 20;
+    const interval = setInterval(() => {
+      if (progress < 90) {
+        progress += Math.floor(Math.random() * 8) + 2;
+        pBar.style.width = `${progress}%`;
+        pPct.textContent = `${progress}%`;
+        if (progress > 30 && progress < 60) {
+          pStatus.textContent = '正在计算国际标准 CIEDE2000 色差与 3D 色彩流形散度...';
+        } else if (progress >= 60) {
+          pStatus.textContent = '正在应用色彩迁移对齐并打包下载产物 (aligned_src.zip)...';
+        }
+      }
+    }, 400);
+
+    try {
+      const resp = await fetch('/api/upload_and_align', {
+        method: 'POST',
+        body: formData,
+      });
+
+      clearInterval(interval);
+
+      if (!resp.ok) {
+        const errJson = await resp.json();
+        throw new Error(errJson.detail || '处理失败');
+      }
+
+      pBar.style.width = '100%';
+      pPct.textContent = '100%';
+      pStatus.textContent = '🎉 处理完成！色差统计已更新，aligned_src.zip 已生成！';
+
+      const data = await resp.json();
+      setTimeout(() => {
+        applyDataset(data, `自定义任务 (${data.summary.total_pairs} 组)`, data.download_url, data.report_url);
+        pBox.style.display = 'none';
+        btnStart.disabled = false;
+      }, 800);
+
+    } catch (err) {
+      clearInterval(interval);
+      pBox.style.display = 'none';
+      btnStart.disabled = false;
+      alert(`处理出错: ${err.message}`);
+    }
+  }
+
+  function setupEvents() {
+    // Search
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      currentSearch = e.target.value.trim().toLowerCase();
+      currentPage = 1;
+      render();
+    });
+
+    // Filter Buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        currentPage = 1;
+        render();
+      });
+    });
+
+    // Sort Dropdown
+    document.getElementById('sort-select').addEventListener('change', (e) => {
+      currentSort = e.target.value;
+      render();
+    });
+
+    // Modal Close
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    document.getElementById('modal').addEventListener('click', (e) => {
+      if (e.target.id === 'modal') closeModal();
+    });
+
+    // Slider setup
+    const sliderContainer = document.getElementById('slider-container');
+    const sliderHandle = document.getElementById('slider-handle');
+    const sliderTop = document.getElementById('slider-top');
+
+    let isSliding = false;
+    function updateSlider(x) {
+      const rect = sliderContainer.getBoundingClientRect();
+      let pos = (x - rect.left) / rect.width;
+      pos = Math.max(0, Math.min(1, pos));
+      const pct = pos * 100;
+      sliderHandle.style.left = `${pct}%`;
+      sliderTop.style.clipPath = `polygon(0 0, ${pct}% 0, ${pct}% 100%, 0 100%)`;
+    }
+
+    sliderContainer.addEventListener('mousedown', (e) => {
+      isSliding = true;
+      updateSlider(e.clientX);
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!isSliding) return;
+      updateSlider(e.clientX);
+    });
+    window.addEventListener('mouseup', () => { isSliding = false; });
+  }
+
+  function filterAndSortItems() {
+    let list = items.slice();
+
+    // Filter
+    if (currentSearch) {
+      list = list.filter(item => item.filename.toLowerCase().includes(currentSearch));
+    }
+
+    if (currentFilter === 'high') {
+      list = list.filter(item => item.metrics_raw.ciede2000_mean > 2.0);
+    } else if (currentFilter === 'med') {
+      list = list.filter(item => item.metrics_raw.ciede2000_mean >= 1.5 && item.metrics_raw.ciede2000_mean <= 2.0);
+    } else if (currentFilter === 'low') {
+      list = list.filter(item => item.metrics_raw.ciede2000_mean < 1.5);
+    }
+
+    // Sort
+    if (currentSort === 'id_asc') {
+      list.sort((a, b) => a.id - b.id);
+    } else if (currentSort === 'de00_desc') {
+      list.sort((a, b) => b.metrics_raw.ciede2000_mean - a.metrics_raw.ciede2000_mean);
+    } else if (currentSort === 'de00_asc') {
+      list.sort((a, b) => a.metrics_raw.ciede2000_mean - b.metrics_raw.ciede2000_mean);
+    } else if (currentSort === 'db_desc') {
+      list.sort((a, b) => b.metrics_aligned.improvement_db_pct - a.metrics_aligned.improvement_db_pct);
+    } else if (currentSort === 'psnr_desc') {
+      list.sort((a, b) => b.metrics_aligned.psnr - a.metrics_aligned.psnr);
+    }
+
+    return list;
+  }
+
+  function render() {
+    const list = filterAndSortItems();
+    document.getElementById('filtered-count').textContent = `显示 ${list.length} / ${items.length} 组`;
+
+    const totalPages = Math.ceil(list.length / PAGE_SIZE) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = list.slice(start, start + PAGE_SIZE);
+
+    const tbody = document.getElementById('table-body');
+    tbody.innerHTML = '';
+
+    pageItems.forEach(item => {
+      const tr = document.createElement('tr');
+      const mr = item.metrics_raw;
+      const ma = item.metrics_aligned;
+
+      let deBadgeClass = 'green';
+      if (mr.ciede2000_mean > 3.0) deBadgeClass = 'red';
+      else if (mr.ciede2000_mean > 2.0) deBadgeClass = 'amber';
+      else if (mr.ciede2000_mean > 1.2) deBadgeClass = 'blue';
+
+      tr.innerHTML = `
+        <td class="col-id">
+          <div>#${item.id}</div>
+          <div style="font-size: 10px; color: var(--text-muted); word-break: break-all;">${item.filename}</div>
+        </td>
+        <td class="col-img">
+          <div class="thumb-card" onclick="openModal(${item.id})">
+            <img class="thumb-img" src="${item.thumbs.src}" alt="src">
+            <span class="thumb-label">src (源图)</span>
+          </div>
+        </td>
+        <td class="col-img">
+          <div class="thumb-card" onclick="openModal(${item.id})">
+            <img class="thumb-img" src="${item.thumbs.tag}" alt="tag">
+            <span class="thumb-label">tag (目标图)</span>
+          </div>
+        </td>
+        <td class="col-space">
+          <div class="space-visual">
+            <div class="space-head">
+              <span>CIE a*-b* 色度</span>
+              <span>RGB/L* 直方图</span>
+            </div>
+            <div class="space-row">
+              <canvas class="gamut-canvas" id="gamut-src-${item.id}" width="68" height="68"></canvas>
+              <canvas class="hist-canvas" id="hist-src-${item.id}" width="120" height="68"></canvas>
+            </div>
+            <div class="space-stat">
+              <span>L*=${mr.src_lab_mean[0]}</span>
+              <span>a*=${mr.src_lab_mean[1]}</span>
+              <span>b*=${mr.src_lab_mean[2]}</span>
+            </div>
+          </div>
+        </td>
+        <td class="col-space">
+          <div class="space-visual">
+            <div class="space-head">
+              <span>CIE a*-b* 色度</span>
+              <span>RGB/L* 直方图</span>
+            </div>
+            <div class="space-row">
+              <canvas class="gamut-canvas" id="gamut-tag-${item.id}" width="68" height="68"></canvas>
+              <canvas class="hist-canvas" id="hist-tag-${item.id}" width="120" height="68"></canvas>
+            </div>
+            <div class="space-stat">
+              <span>L*=${mr.tag_lab_mean[0]}</span>
+              <span>a*=${mr.tag_lab_mean[1]}</span>
+              <span>b*=${mr.tag_lab_mean[2]}</span>
+            </div>
+          </div>
+        </td>
+        <td class="col-metrics">
+          <div class="metrics-container">
+            <div class="metric-row">
+              <span class="m-label">CIEDE2000 (ΔE₀₀ 均值)</span>
+              <span class="pill ${deBadgeClass}">${mr.ciede2000_mean.toFixed(3)}</span>
+            </div>
+            <div class="metric-row">
+              <span class="m-label">色差 P95 / 最大值</span>
+              <span class="m-val">${mr.ciede2000_p95.toFixed(2)} / ${mr.ciede2000_max.toFixed(1)}</span>
+            </div>
+            <div class="metric-row">
+              <span class="m-label">通道色偏 (ΔL*, Δa*, Δb*)</span>
+              <span class="m-val" style="color:${mr.delta_a > 0 ? '#ff7b72':'#7ee787'}">
+                ${mr.delta_L > 0 ? '+'+mr.delta_L : mr.delta_L}, 
+                ${mr.delta_a > 0 ? '+'+mr.delta_a : mr.delta_a}, 
+                ${mr.delta_b > 0 ? '+'+mr.delta_b : mr.delta_b}
+              </span>
+            </div>
+            <div class="metric-row">
+              <span class="m-label">3D Bhattacharyya 散度</span>
+              <span class="m-val">${mr.bhattacharyya_3d.toFixed(5)}</span>
+            </div>
+            <div class="metric-row">
+              <span class="m-label">Wasserstein 最优传输 (W₁)</span>
+              <span class="m-val">${mr.wasserstein_1d.toFixed(3)}</span>
+            </div>
+            <div class="metric-row">
+              <span class="m-label">PSNR / SSIM 保真度</span>
+              <span class="m-val">${mr.psnr.toFixed(1)} dB / ${mr.ssim.toFixed(3)}</span>
+            </div>
+          </div>
+        </td>
+        <td class="col-aligned">
+          <div class="aligned-box">
+            <div class="aligned-thumbs">
+              <div class="thumb-card" onclick="openModal(${item.id})">
+                <img class="thumb-img" style="border-color: rgba(63, 185, 80, 0.5);" src="${item.thumbs.aligned}" alt="aligned">
+                <span class="thumb-label" style="color: var(--success);">对齐图</span>
+              </div>
+              <div class="thumb-card" onclick="openModal(${item.id})">
+                <img class="thumb-img" src="${item.thumbs.heatmap}" alt="heat">
+                <span class="thumb-label" style="color: var(--warning);">色差热力</span>
+              </div>
+            </div>
+            <div class="aligned-stat-col">
+              <div class="metric-row">
+                <span class="m-label">散度改善</span>
+                <span class="pill green">-${ma.improvement_db_pct}%</span>
+              </div>
+              <div class="metric-row">
+                <span class="m-label">传输优化</span>
+                <span class="pill cyan">-${ma.improvement_w1_pct}%</span>
+              </div>
+              <div class="metric-row">
+                <span class="m-label">PSNR 提升</span>
+                <span class="m-val" style="color: var(--purple);">${ma.psnr_gain > 0 ? '+'+ma.psnr_gain : ma.psnr_gain} dB</span>
+              </div>
+              <button class="btn-detail" onclick="openModal(${item.id})">
+                <span>🔍 详细比对与滑块</span>
+              </button>
+            </div>
+          </div>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
+
+      setTimeout(() => {
+        if (item.src_hist) {
+          drawGamut(document.getElementById(`gamut-src-${item.id}`), item.src_hist.gamut_2d);
+          drawHistogram(document.getElementById(`hist-src-${item.id}`), item.src_hist.rgb, item.src_hist.lab);
+        }
+        if (item.tag_hist) {
+          drawGamut(document.getElementById(`gamut-tag-${item.id}`), item.tag_hist.gamut_2d);
+          drawHistogram(document.getElementById(`hist-tag-${item.id}`), item.tag_hist.rgb, item.tag_hist.lab);
+        }
+      }, 0);
+    });
+
+    renderPagination(totalPages);
+  }
+
+  function renderPagination(totalPages) {
+    const container = document.getElementById('pagination');
+    container.innerHTML = '';
+    if (totalPages <= 1) return;
+
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'page-btn';
+    prevBtn.textContent = '◀ 上一页';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.onclick = () => { currentPage--; render(); };
+    container.appendChild(prevBtn);
+
+    for (let p = 1; p <= totalPages; p++) {
+      const btn = document.createElement('button');
+      btn.className = `page-btn ${p === currentPage ? 'active' : ''}`;
+      btn.textContent = p;
+      btn.onclick = () => { currentPage = p; render(); };
+      container.appendChild(btn);
+    }
+
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'page-btn';
+    nextBtn.textContent = '下一页 ▶';
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.onclick = () => { currentPage++; render(); };
+    container.appendChild(nextBtn);
+  }
+
+  // Draw 2D Gamut Canvas
+  function drawGamut(canvas, grid) {
+    if (!canvas || !grid) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const bgGrad = ctx.createRadialGradient(w/2, h/2, 2, w/2, h/2, w/2);
+    bgGrad.addColorStop(0, '#333');
+    bgGrad.addColorStop(1, '#000');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    const cellW = w / 16;
+    const cellH = h / 16;
+
+    let maxVal = 0;
+    for (let r = 0; r < 16; r++) {
+      for (let c = 0; c < 16; c++) {
+        if (grid[r][c] > maxVal) maxVal = grid[r][c];
+      }
+    }
+    if (maxVal === 0) maxVal = 1;
+
+    for (let r = 0; r < 16; r++) {
+      for (let c = 0; c < 16; c++) {
+        const val = grid[r][c];
+        if (val > 0.0005) {
+          const intensity = Math.min(1, Math.log10(val * 100 + 1) / Math.log10(maxVal * 100 + 1));
+          const red = Math.floor(c * 12 + r * 6);
+          const green = Math.floor((15 - r) * 10);
+          const blue = Math.floor((15 - c) * 12);
+
+          ctx.fillStyle = `rgba(${Math.min(255, red + 100)}, ${Math.min(255, green + 60)}, ${Math.min(255, blue + 60)}, ${Math.max(0.3, intensity)})`;
+          ctx.beginPath();
+          ctx.arc(c * cellW + cellW/2, (15 - r) * cellH + cellH/2, Math.max(1.5, intensity * 3.5), 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h);
+    ctx.moveTo(0, h/2); ctx.lineTo(w, h/2);
+    ctx.stroke();
+  }
+
+  // Draw 1D Histogram Canvas
+  function drawHistogram(canvas, rgb, lab) {
+    if (!canvas || !rgb) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const bins = rgb.r.length;
+    const step = w / (bins - 1);
+
+    let max = 0.001;
+    for (let i = 0; i < bins; i++) {
+      max = Math.max(max, rgb.r[i], rgb.g[i], rgb.b[i], lab.L[i]);
+    }
+
+    function drawLine(arr, strokeStyle, lineWidth = 1.2) {
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = lineWidth;
+      ctx.beginPath();
+      for (let i = 0; i < bins; i++) {
+        const x = i * step;
+        const y = h - (arr[i] / max) * (h - 6) - 3;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    ctx.setLineDash([2, 2]);
+    drawLine(lab.L, 'rgba(255, 255, 255, 0.4)', 1.0);
+    ctx.setLineDash([]);
+
+    drawLine(rgb.r, 'rgba(255, 90, 95, 0.85)', 1.5);
+    drawLine(rgb.g, 'rgba(57, 211, 83, 0.85)', 1.5);
+    drawLine(rgb.b, 'rgba(88, 166, 255, 0.85)', 1.5);
+  }
+
+  // Open Detail Modal
+  function openModal(id) {
+    const item = items.find(it => it.id === id);
+    if (!item) return;
+
+    document.getElementById('modal-title-text').textContent = `样本 #${item.id} · ${item.filename}`;
+    document.getElementById('modal-badge-de00').textContent = `ΔE₀₀: ${item.metrics_raw.ciede2000_mean.toFixed(3)}`;
+
+    document.getElementById('m-img-src').src = item.thumbs.src;
+    document.getElementById('m-img-aligned').src = item.thumbs.aligned;
+    document.getElementById('m-img-tag').src = item.thumbs.tag;
+    document.getElementById('m-img-heat').src = item.thumbs.heatmap;
+
+    // Slider setup
+    document.getElementById('slider-bottom').src = item.thumbs.tag;
+    document.getElementById('slider-top').src = item.thumbs.aligned;
+
+    document.getElementById('slider-handle').style.left = '50%';
+    document.getElementById('slider-top').style.clipPath = 'polygon(0 0, 50% 0, 50% 100%, 0 100%)';
+
+    const mr = item.metrics_raw;
+    const ma = item.metrics_aligned;
+
+    document.getElementById('m-stat-de00').innerHTML = `${mr.ciede2000_mean.toFixed(3)} ➔ <span style="color:var(--success);">${ma.ciede2000_mean.toFixed(3)}</span>`;
+    document.getElementById('m-stat-p95').innerHTML = `${mr.ciede2000_p95.toFixed(2)} ➔ <span style="color:var(--success);">${ma.ciede2000_p95.toFixed(2)}</span>`;
+    document.getElementById('m-stat-db').innerHTML = `${mr.bhattacharyya_3d.toFixed(5)} ➔ <span style="color:var(--success);">${ma.bhattacharyya_3d.toFixed(5)} (-${ma.improvement_db_pct}%)</span>`;
+    document.getElementById('m-stat-w1').innerHTML = `${mr.wasserstein_1d.toFixed(3)} ➔ <span style="color:var(--cyan);">${ma.wasserstein_1d.toFixed(3)} (-${ma.improvement_w1_pct}%)</span>`;
+    document.getElementById('m-stat-psnr').innerHTML = `${mr.psnr.toFixed(2)} dB ➔ <span style="color:var(--purple);">${ma.psnr.toFixed(2)} dB (${ma.psnr_gain > 0 ? '+'+ma.psnr_gain : ma.psnr_gain} dB)</span>`;
+    document.getElementById('m-stat-ssim').innerHTML = `${mr.ssim.toFixed(4)} ➔ <span style="color:var(--purple);">${ma.ssim.toFixed(4)}</span>`;
+
+    document.getElementById('m-stat-dl').textContent = `${mr.delta_L > 0 ? '+'+mr.delta_L : mr.delta_L} (明度偏向)`;
+    document.getElementById('m-stat-da').textContent = `${mr.delta_a > 0 ? '+'+mr.delta_a : mr.delta_a} (${mr.delta_a > 0 ? '偏红/洋红' : '偏绿'})`;
+    document.getElementById('m-stat-db-shift').textContent = `${mr.delta_b > 0 ? '+'+mr.delta_b : mr.delta_b} (${mr.delta_b > 0 ? '偏暖黄' : '偏冷蓝'})`;
+    document.getElementById('m-stat-dc').textContent = `${mr.delta_C > 0 ? '+'+mr.delta_C : mr.delta_C} (${mr.delta_C > 0 ? '饱和度偏高' : '饱和度偏低'})`;
+    document.getElementById('m-stat-roi-ratio').textContent = `${mr.edit_ratio}%`;
+    document.getElementById('m-stat-roi-de').textContent = `${mr.edit_de00.toFixed(3)}`;
+
+    document.getElementById('modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+  }
+
+  window.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
